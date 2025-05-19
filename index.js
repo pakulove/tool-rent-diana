@@ -29,7 +29,7 @@ app.post("/api/auth/register", async (req, res) => {
   if (!username || !password) {
     return res
       .status(400)
-      .json({ error: "Username and password are required" });
+      .json({ error: "Имя пользователя и пароль обязательны" });
   }
 
   // Check if user already exists
@@ -39,11 +39,7 @@ app.post("/api/auth/register", async (req, res) => {
     async (err, user) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ error: "Database error" });
-      }
-
-      if (user) {
-        return res.status(400).json({ error: "Username already exists" });
+        return res.status(500).json({ error: "Ошибка базы данных" });
       }
 
       // Hash password
@@ -56,7 +52,7 @@ app.post("/api/auth/register", async (req, res) => {
         function (err) {
           if (err) {
             console.error(err);
-            return res.status(500).json({ error: "Database error" });
+            return res.status(500).json({ error: "Ошибка базы данных" });
           }
 
           // Set cookie
@@ -65,7 +61,7 @@ app.post("/api/auth/register", async (req, res) => {
             maxAge: 24 * 60 * 60 * 1000, // 24 hours
           });
 
-          res.json({ message: "Registration successful" });
+          res.json({ message: "Регистрация прошла успешно" });
         }
       );
     }
@@ -88,17 +84,21 @@ app.post("/api/auth/login", async (req, res) => {
     async (err, user) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ error: "Database error" });
+        return res.status(500).json({ error: "Ошибка базы данных" });
       }
 
       if (!user) {
-        return res.status(401).json({ error: "Invalid credentials" });
+        return res
+          .status(401)
+          .json({ error: "Неверное имя пользователя или пароль" });
       }
 
       // Check password
       const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) {
-        return res.status(401).json({ error: "Invalid credentials" });
+        return res
+          .status(401)
+          .json({ error: "Неверное имя пользователя или пароль" });
       }
 
       // Set cookie
@@ -107,27 +107,21 @@ app.post("/api/auth/login", async (req, res) => {
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
       });
 
-      res.json({ message: "Login successful" });
+      res.json({ message: "Вход в систему прошел успешно" });
     }
   );
 });
 
 app.post("/api/auth/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.send(`
-    <div id="auth-links" hx-get="/api/auth/me" hx-trigger="load">
-      <a href="/login.html">Войти</a>
-    </div>
-  `);
+  res.send('<a href="/login.html">Войти</a>');
 });
 
 // Get current user
 app.get("/api/auth/me", (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.send(`
-      <a href="/login.html">Войти</a>
-    `);
+    return res.send('<a href="/login.html">Войти</a>');
   }
 
   db.get(
@@ -136,21 +130,17 @@ app.get("/api/auth/me", (req, res) => {
     (err, user) => {
       if (err) {
         console.error(err);
-        return res.send(`
-          <a href="/login.html">Войти</a>
-        `);
+        return res.send('<a href="/login.html">Войти</a>');
       }
 
       if (!user) {
         res.clearCookie("user_id");
-        return res.send(`
-          <a href="/login.html">Войти</a>
-        `);
+        return res.send('<a href="/login.html">Войти</a>');
       }
 
       res.send(`
         <span>Привет, ${user.username}!</span>
-        <a href="#" hx-post="/api/auth/logout" hx-swap="outerHTML">Выйти</a>
+        <a href="#" onclick="document.body.dispatchEvent(new Event('cart-updated')); fetch('/api/auth/logout', {method: 'POST'}).then(() => window.location.reload())">Выйти</a>
       `);
     }
   );
@@ -165,7 +155,7 @@ app.get("/api/products", (req, res) => {
   db.all("SELECT * FROM product", [], (err, products) => {
     if (err) {
       console.error(err);
-      return res.status(500).send("Database error");
+      return res.status(500).send("Ошибка базы данных");
     }
 
     let html = "";
@@ -266,11 +256,11 @@ app.post("/api/cart/add", (req, res) => {
     (err, product) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ error: "Database error" });
+        return res.status(500).json({ error: "Ошибка базы данных" });
       }
 
       if (!product) {
-        return res.status(404).json({ error: "Product not found" });
+        return res.status(404).json({ error: "Товар не найден" });
       }
 
       db.run(
@@ -279,7 +269,7 @@ app.post("/api/cart/add", (req, res) => {
         (err) => {
           if (err) {
             console.error(err);
-            return res.status(500).json({ error: "Database error" });
+            return res.status(500).json({ error: "Ошибка базы данных" });
           }
           res.sendStatus(204);
         }
@@ -291,7 +281,7 @@ app.post("/api/cart/add", (req, res) => {
 app.delete("/api/cart/remove/:id", (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Не авторизован" });
   }
 
   db.run(
@@ -300,7 +290,7 @@ app.delete("/api/cart/remove/:id", (req, res) => {
     (err) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ error: "Database error" });
+        return res.status(500).json({ error: "Ошибка базы данных" });
       }
       res.sendStatus(204);
     }
@@ -310,13 +300,13 @@ app.delete("/api/cart/remove/:id", (req, res) => {
 app.post("/api/cart/clear", (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Не авторизован" });
   }
 
   db.run("DELETE FROM cart WHERE user_id = ?", [user_id], (err) => {
     if (err) {
       console.error(err);
-      return res.status(500).json({ error: "Database error" });
+      return res.status(500).json({ error: "Ошибка базы данных" });
     }
     res.sendStatus(204);
   });
@@ -325,7 +315,7 @@ app.post("/api/cart/clear", (req, res) => {
 app.post("/api/cart/checkout", (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Не авторизован" });
   }
 
   db.all(
@@ -339,11 +329,11 @@ app.post("/api/cart/checkout", (req, res) => {
     (err, items) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ error: "Database error" });
+        return res.status(500).json({ error: "Ошибка базы данных" });
       }
 
       if (items.length === 0) {
-        return res.status(400).json({ error: "Cart is empty" });
+        return res.status(400).json({ error: "Корзина пуста" });
       }
 
       const total = items.reduce((sum, item) => sum + item.price, 0);
@@ -360,7 +350,7 @@ app.post("/api/cart/checkout", (req, res) => {
           if (err) {
             db.run("ROLLBACK");
             console.error(err);
-            return res.status(500).json({ error: "Database error" });
+            return res.status(500).json({ error: "Ошибка базы данных" });
           }
 
           const order_id = this.lastID;
@@ -377,7 +367,7 @@ app.post("/api/cart/checkout", (req, res) => {
                 if (err) {
                   db.run("ROLLBACK");
                   console.error(err);
-                  return res.status(500).json({ error: "Database error" });
+                  return res.status(500).json({ error: "Ошибка базы данных" });
                 }
 
                 completed++;
@@ -391,11 +381,11 @@ app.post("/api/cart/checkout", (req, res) => {
                         console.error(err);
                         return res
                           .status(500)
-                          .json({ error: "Database error" });
+                          .json({ error: "Ошибка базы данных" });
                       }
 
                       db.run("COMMIT");
-                      res.json({ message: "Order created successfully" });
+                      res.json({ message: "Заказ успешно создан" });
                     }
                   );
                 }
@@ -411,12 +401,12 @@ app.post("/api/cart/checkout", (req, res) => {
 app.post("/api/cart/save-dates", (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Не авторизован" });
   }
 
   const { rental_start, rental_end } = req.body;
   if (!rental_start || !rental_end) {
-    return res.status(400).json({ error: "Dates are required" });
+    return res.status(400).json({ error: "Даты обязательны" });
   }
 
   db.run(
@@ -428,9 +418,9 @@ app.post("/api/cart/save-dates", (req, res) => {
     (err) => {
       if (err) {
         console.error(err);
-        return res.status(500).json({ error: "Database error" });
+        return res.status(500).json({ error: "Ошибка базы данных" });
       }
-      res.json({ message: "Dates saved successfully" });
+      res.json({ message: "Даты сохранены успешно" });
     }
   );
 });
