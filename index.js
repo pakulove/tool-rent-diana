@@ -218,6 +218,15 @@ app.get("/api/prices", async (req, res) => {
                 .join("")}
             </ul>
           </div>
+          <button
+            hx-post="/api/cart/add"
+            hx-vals='{"product_id": ${product.id}}'
+            hx-swap="none"
+            hx-trigger="click"
+            hx-on::after-request="document.body.dispatchEvent(new Event('cart-updated'))"
+          >
+            Добавить в корзину
+          </button>
         </div>
       `;
     });
