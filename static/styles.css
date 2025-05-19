@@ -629,84 +629,67 @@ main {
 }
 
 /* Price page styles */
-.price-section {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.price-section h1 {
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #333;
-}
-
-.price-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  padding: 1rem;
+.price-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .price-item {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  transition: transform 0.2s;
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  width: 200px;
+  text-align: center;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
 }
 
 .price-item:hover {
-  transform: translateY(-5px);
+  transform: scale(1.05);
 }
 
 .price-item img {
   width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-bottom: 1rem;
+  height: auto;
+  border-radius: 5px;
+  margin-bottom: 10px;
 }
 
 .price-item h2 {
-  color: #333;
-  margin-bottom: 0.5rem;
-  font-size: 1.25rem;
+  font-size: 1.2em;
+  margin-bottom: 10px;
 }
 
 .price-item p {
-  color: #666;
-  margin-bottom: 1rem;
+  font-size: 1em;
+  margin-bottom: 10px;
 }
 
 .price-info {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 4px;
-}
-
-.price-info p {
-  color: #333;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.price-info ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.price-info li {
-  color: #666;
-  margin-bottom: 0.25rem;
-  padding-left: 1.5rem;
-  position: relative;
-}
-
-.price-info li:before {
-  content: "•";
   position: absolute;
-  left: 0.5rem;
-  color: #007bff;
+  top: 0;
+  left: auto;
+  right: 100%;
+  width: 200px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-10px);
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 10;
+}
+
+.price-item:hover .price-info {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
 }
