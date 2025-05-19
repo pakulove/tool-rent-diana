@@ -693,3 +693,48 @@ main {
   visibility: visible;
   transform: translateX(0);
 }
+
+.price-item button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.price-item button:hover {
+  background-color: #45a049;
+}
+
+/* Notification styles */
+#notifications-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.notification {
+  padding: 15px 25px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  color: white;
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification.success {
+  background-color: #4caf50;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
