@@ -30,20 +30,22 @@
     <div id="notifications-container"></div>
 
     <script>
+      // Обработка ошибок авторизации
       document.body.addEventListener("htmx:afterRequest", function (evt) {
-        if (evt.detail.path === "/api/cart/add") {
-          if (evt.detail.xhr.status === 401) {
-            const response = JSON.parse(evt.detail.xhr.response);
-            window.location.href = response.redirect;
-          } else if (evt.detail.successful) {
-            const notification = document.createElement("div");
-            notification.className = "notification success";
-            notification.textContent = "Товар добавлен в корзину";
-            document
-              .getElementById("notifications-container")
-              .appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
-          }
+        if (evt.detail.xhr.status === 401) {
+          const response = JSON.parse(evt.detail.xhr.response);
+          window.location.href = response.redirect;
+        } else if (
+          evt.detail.successful &&
+          evt.detail.path === "/api/cart/add"
+        ) {
+          const notification = document.createElement("div");
+          notification.className = "notification success";
+          notification.textContent = "Товар добавлен в корзину";
+          document
+            .getElementById("notifications-container")
+            .appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
         }
       });
 
