@@ -73,33 +73,24 @@
           hx-on::before-request="
             const cartItems = document.querySelectorAll('.cart-item');
             if (cartItems.length === 0) {
-              const notification = document.createElement('div');
-              notification.className = 'notification error';
-              notification.textContent = 'Корзина пуста';
-              document.getElementById('notifications-container').appendChild(notification);
+              showNotification('Корзина пуста', 'error');
               event.preventDefault();
               return false;
             }
             const startDate = document.getElementById('rental-start').value;
             const endDate = document.getElementById('rental-end').value;
             if (!startDate || !endDate) {
-              const notification = document.createElement('div');
-              notification.className = 'notification error';
-              notification.textContent = 'Пожалуйста, выберите даты аренды';
-              document.getElementById('notifications-container').appendChild(notification);
+              showNotification('Пожалуйста, выберите даты аренды', 'error');
               event.preventDefault();
               return false;
             }
           "
           hx-on::after-request="
             if (event.detail.successful) {
-              const notification = document.createElement('div');
-              notification.className = 'notification success';
-              notification.textContent = 'Заказ успешно оформлен';
-              document.getElementById('notifications-container').appendChild(notification);
+              showNotification('Заказ успешно оформлен', 'success');
               document.getElementById('rental-start').value = '';
               document.getElementById('rental-end').value = '';
-              document.body.dispatchEvent(new Event('cart-updated'));
+              window.location.reload();
             }
           "
         >
@@ -111,28 +102,32 @@
     <div id="notifications-container"></div>
 
     <script>
-      // Handle authentication errors and notifications
+      let notificationShown = false;
+
+      function showNotification(message, type) {
+        if (notificationShown) return;
+        notificationShown = true;
+
+        const notification = document.createElement("div");
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document
+          .getElementById("notifications-container")
+          .appendChild(notification);
+        setTimeout(() => {
+          notification.remove();
+          notificationShown = false;
+        }, 3000);
+      }
+
+      // Handle authentication errors
       document.body.addEventListener("htmx:afterRequest", function (evt) {
-        // Handle cart items authentication
         if (evt.detail.pathInfo.requestPath === "/api/cart/items") {
           if (evt.detail.xhr.status === 401) {
             const response = JSON.parse(evt.detail.xhr.response);
             if (response.redirect) {
               window.location.href = response.redirect;
             }
-          }
-        }
-
-        // Handle checkout response
-        if (evt.detail.pathInfo.requestPath === "/api/cart/checkout") {
-          if (evt.detail.successful) {
-            const notification = document.createElement("div");
-            notification.className = "notification success";
-            notification.textContent = "Заказ успешно оформлен";
-            document
-              .getElementById("notifications-container")
-              .appendChild(notification);
-            document.body.dispatchEvent(new Event("cart-updated"));
           }
         }
       });
