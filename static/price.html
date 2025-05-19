@@ -46,6 +46,17 @@
           }
         }
       });
+
+      // Добавляем обработчик события обновления корзины
+      document.body.addEventListener("cart-updated", function () {
+        const notification = document.createElement("div");
+        notification.className = "notification success";
+        notification.textContent = "Товар добавлен в корзину";
+        document
+          .getElementById("notifications-container")
+          .appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+      });
     </script>
   </body>
 </html>

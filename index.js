@@ -333,7 +333,10 @@ app.post("/api/cart/add", async (req, res) => {
 app.delete("/api/cart/remove/:id", async (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.status(401).json({ error: "Не авторизован" });
+    return res.status(401).json({
+      error: "Not authenticated",
+      redirect: "/login.html",
+    });
   }
 
   try {
@@ -355,7 +358,10 @@ app.delete("/api/cart/remove/:id", async (req, res) => {
 app.post("/api/cart/clear", async (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.status(401).json({ error: "Не авторизован" });
+    return res.status(401).json({
+      error: "Not authenticated",
+      redirect: "/login.html",
+    });
   }
 
   try {
@@ -376,7 +382,10 @@ app.post("/api/cart/clear", async (req, res) => {
 app.post("/api/cart/checkout", async (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.status(401).json({ error: "Не авторизован" });
+    return res.status(401).json({
+      error: "Not authenticated",
+      redirect: "/login.html",
+    });
   }
 
   try {
@@ -448,7 +457,10 @@ app.post("/api/cart/checkout", async (req, res) => {
 app.post("/api/cart/save-dates", async (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
-    return res.status(401).json({ error: "Не авторизован" });
+    return res.status(401).json({
+      error: "Not authenticated",
+      redirect: "/login.html",
+    });
   }
 
   const { rental_start, rental_end } = req.body;

@@ -17,9 +17,7 @@
       <nav>
         <a href="/">Главная</a>
         <a href="/price.html">Прайс</a>
-        <div id="auth-links" hx-get="/api/auth/me" hx-trigger="load">
-          <!-- Auth links will be loaded here -->
-        </div>
+        <div id="auth-links" hx-get="/api/auth/me" hx-trigger="load"></div>
         <a href="/cart.html">Корзина</a>
       </nav>
     </header>
@@ -117,5 +115,50 @@
     </main>
 
     <div id="notifications-container"></div>
+
+    <script>
+      // Проверка авторизации при загрузке страницы
+      document.addEventListener("DOMContentLoaded", function () {
+        fetch("/api/auth/me")
+          .then((response) => response.text())
+          .then((html) => {
+            if (html.includes("Войти")) {
+              window.location.href = "/login.html";
+            }
+          });
+      });
+
+      // Обработка ошибок авторизации
+      document.body.addEventListener("htmx:afterRequest", function (evt) {
+        if (evt.detail.xhr.status === 401) {
+          window.location.href = "/login.html";
+        }
+      });
+
+      function validateDates() {
+        const startDate = document.getElementById("rental-start").value;
+        const endDate = document.getElementById("rental-end").value;
+
+        if (startDate && endDate) {
+          if (new Date(startDate) > new Date(endDate)) {
+            alert("Дата начала не может быть позже даты окончания");
+            document.getElementById("rental-start").value = "";
+            document.getElementById("rental-end").value = "";
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function showNotification(message, type = "success") {
+        const notification = document.createElement("div");
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document
+          .getElementById("notifications-container")
+          .appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+      }
+    </script>
   </body>
 </html>
