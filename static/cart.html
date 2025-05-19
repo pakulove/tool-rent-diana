@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Корзина</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body data-page="cart">
+    <header>
+      <nav>
+        <a href="/">Главная</a>
+        <a href="/price.html">Прайс</a>
+        <div id="auth-links" hx-get="/api/auth/me" hx-trigger="load">
+          <!-- Auth links will be loaded here -->
+        </div>
+        <a href="/cart.html">Корзина</a>
+      </nav>
+    </header>
+    <main>
+      <div id="cart">
+        <h2>🛒 Ваша корзина</h2>
+        <div
+          id="cart-items"
+          hx-get="/api/cart/items"
+          hx-trigger="load, cart-updated from:body"
+          hx-swap="innerHTML"
+        ></div>
+      </div>
+
+      <div class="date-picker">
+        <h3>Выберите сроки аренды</h3>
+        <label>Дата начала аренды:</label>
+        <input type="date" id="rental-start" name="rental_start" />
+
+        <label>Дата окончания аренды:</label>
+        <input type="date" id="rental-end" name="rental_end" />
+
+        <button
+          hx-post="/api/cart/save-dates"
+          hx-include="[name='rental_start'], [name='rental_end']"
+          hx-swap="none"
+          hx-trigger="click"
+        >
+          Сохранить даты
+        </button>
+      </div>
+
+      <div id="cart-buttons">
+        <button
+          id="clear-cart-button"
+          hx-post="/api/cart/clear"
+          hx-swap="none"
+          hx-trigger="click"
+          hx-on::after-request="
+            document.body.dispatchEvent(new Event('cart-updated'));
+            document.getElementById('rental-start').value = '';
+            document.getElementById('rental-end').value = '';
+          "
+        >
+          Очистить корзину
+        </button>
+        <button
+          id="checkout-button"
+          hx-post="/api/cart/checkout"
+          hx-swap="none"
+          hx-trigger="click"
+          hx-on::before-request="
+            const cartItems = document.querySelectorAll('.cart-item');
+            if (cartItems.length === 0) {
+              const notification = document.createElement('div');
+              notification.className = 'notification error';
+              notification.textContent = 'Корзина пуста';
+              document.getElementById('notifications-container').appendChild(notification);
+              event.preventDefault();
+              return false;
+            }
+            const startDate = document.getElementById('rental-start').value;
+            const endDate = document.getElementById('rental-end').value;
+            if (!startDate || !endDate) {
+              const notification = document.createElement('div');
+              notification.className = 'notification error';
+              notification.textContent = 'Пожалуйста, выберите даты аренды';
+              document.getElementById('notifications-container').appendChild(notification);
+              event.preventDefault();
+              return false;
+            }
+          "
+          hx-on::after-request="
+            if (event.detail.successful) {
+              const notification = document.createElement('div');
+              notification.className = 'notification success';
+              notification.textContent = 'Заказ успешно оформлен';
+              document.getElementById('notifications-container').appendChild(notification);
+              document.getElementById('rental-start').value = '';
+              document.getElementById('rental-end').value = '';
+              document.body.dispatchEvent(new Event('cart-updated'));
+            }
+          "
+        >
+          Оформить заказ
+        </button>
+      </div>
+    </main>
+
+    <div id="notifications-container"></div>
+
+    <script>
+      // Handle authentication errors and notifications
+      document.body.addEventListener("htmx:afterRequest", function (evt) {
+        // Handle cart items authentication
+        if (evt.detail.pathInfo.requestPath === "/api/cart/items") {
+          if (evt.detail.xhr.status === 401) {
+            const response = JSON.parse(evt.detail.xhr.response);
+            if (response.redirect) {
+              window.location.href = response.redirect;
+            }
+          }
+        }
+
+        // Handle checkout response
+        if (evt.detail.pathInfo.requestPath === "/api/cart/checkout") {
+          if (evt.detail.successful) {
+            const notification = document.createElement("div");
+            notification.className = "notification success";
+            notification.textContent = "Заказ успешно оформлен";
+            document
+              .getElementById("notifications-container")
+              .appendChild(notification);
+            document.body.dispatchEvent(new Event("cart-updated"));
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
