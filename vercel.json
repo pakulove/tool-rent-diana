@@ -12,6 +12,26 @@
   ],
   "routes": [
     {
+      "src": "/styles.css",
+      "dest": "/static/styles.css"
+    },
+    {
+      "src": "/price.html",
+      "dest": "/static/price.html"
+    },
+    {
+      "src": "/cart.html",
+      "dest": "/static/cart.html"
+    },
+    {
+      "src": "/login.html",
+      "dest": "/static/login.html"
+    },
+    {
+      "src": "/register.html",
+      "dest": "/static/register.html"
+    },
+    {
       "src": "/static/(.*)",
       "dest": "/static/$1"
     },
