@@ -32,6 +32,10 @@
       "dest": "/static/register.html"
     },
     {
+      "src": "/images/(.*)",
+      "dest": "/static/images/$1"
+    },
+    {
       "src": "/static/(.*)",
       "dest": "/static/$1"
     },

@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Вход</title>
-    <link rel="stylesheet" href="/styles.css" />
-    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   </head>
   <body data-page="login">
     <header>
@@ -19,7 +19,7 @@
       <h1>Вход</h1>
       <div class="auth-container">
         <!-- Login Form -->
-        <form hx-post="/api/auth/login" hx-swap="outerHTML" class="auth-form">
+        <form class="auth-form" hx-post="/api/auth/login" hx-swap="none">
           <h2>Вход</h2>
           <input
             type="text"
@@ -34,16 +34,16 @@
             required
           />
           <button type="submit">Войти</button>
-          <p class="auth-switch">
+          <div class="auth-switch">
             Нет аккаунта?
             <a href="#" onclick="showRegister()">Зарегистрироваться</a>
-          </p>
+          </div>
         </form>
 
         <!-- Register Form -->
         <form
           hx-post="/api/auth/register"
-          hx-swap="outerHTML"
+          hx-swap="none"
           class="auth-form"
           style="display: none"
         >
@@ -61,9 +61,9 @@
             required
           />
           <button type="submit">Зарегистрироваться</button>
-          <p class="auth-switch">
+          <div class="auth-switch">
             Уже есть аккаунт? <a href="#" onclick="showLogin()">Войти</a>
-          </p>
+          </div>
         </form>
       </div>
     </main>
