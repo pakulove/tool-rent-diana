@@ -10,6 +10,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
+    <script src="script.js"></script>
   </head>
   <body data-page="cart">
     <header>
@@ -36,16 +37,32 @@
       <div class="date-picker">
         <h3>Выберите сроки аренды</h3>
         <label>Дата начала аренды:</label>
-        <input type="date" id="rental-start" name="rental_start" />
+        <input
+          type="date"
+          id="rental-start"
+          name="rental_start"
+          onchange="validateDates()"
+        />
 
         <label>Дата окончания аренды:</label>
-        <input type="date" id="rental-end" name="rental_end" />
+        <input
+          type="date"
+          id="rental-end"
+          name="rental_end"
+          onchange="validateDates()"
+        />
 
         <button
           hx-post="/api/cart/save-dates"
           hx-include="[name='rental_start'], [name='rental_end']"
           hx-swap="none"
           hx-trigger="click"
+          hx-on::before-request="
+            if (!validateDates()) {
+              event.preventDefault();
+              return false;
+            }
+          "
         >
           Сохранить даты
         </button>
@@ -100,37 +117,5 @@
     </main>
 
     <div id="notifications-container"></div>
-
-    <script>
-      let notificationShown = false;
-
-      function showNotification(message, type) {
-        if (notificationShown) return;
-        notificationShown = true;
-
-        const notification = document.createElement("div");
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-        document
-          .getElementById("notifications-container")
-          .appendChild(notification);
-        setTimeout(() => {
-          notification.remove();
-          notificationShown = false;
-        }, 3000);
-      }
-
-      // Handle authentication errors
-      document.body.addEventListener("htmx:afterRequest", function (evt) {
-        if (evt.detail.pathInfo.requestPath === "/api/cart/items") {
-          if (evt.detail.xhr.status === 401) {
-            const response = JSON.parse(evt.detail.xhr.response);
-            if (response.redirect) {
-              window.location.href = response.redirect;
-            }
-          }
-        }
-      });
-    </script>
   </body>
 </html>
