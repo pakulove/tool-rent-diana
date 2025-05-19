@@ -106,7 +106,7 @@ app.post("/api/auth/login", async (req, res) => {
     res.json({ message: "Вход в систему прошел успешно" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Ошибка базы данных" });
+    res.status(500).json({ error: "Неверное имя пользователя или пароль" });
   }
 });
 
@@ -183,6 +183,41 @@ app.get("/api/products", async (req, res) => {
           >
             Добавить в корзину
           </button>
+        </div>
+      `;
+    });
+    res.send(html);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Ошибка базы данных");
+  }
+});
+
+// Get prices list
+app.get("/api/prices", async (req, res) => {
+  try {
+    const { data: products, error } = await supabase
+      .from("product")
+      .select("*");
+
+    if (error) throw error;
+
+    let html = "";
+    products.forEach((product) => {
+      html += `
+        <div class="price-item">
+          <img src="${product.image}" alt="${product.name}" />
+          <h2>${product.name}</h2>
+          <p>Цена: ${product.price} ₽/день</p>
+          <div class="price-info">
+            <p>⚙️ Характеристики:</p>
+            <ul>
+              ${product.characteristic
+                .split(", ")
+                .map((char) => `<li>${char}</li>`)
+                .join("")}
+            </ul>
+          </div>
         </div>
       `;
     });
