@@ -35,23 +35,27 @@
         if (evt.detail.xhr.status === 401) {
           const response = JSON.parse(evt.detail.xhr.response);
           window.location.href = response.redirect;
-        } else if (
-          evt.detail.successful &&
-          evt.detail.path === "/api/cart/add"
-        ) {
-          document.body.dispatchEvent(new Event("cart-updated"));
+          return;
         }
-      });
 
-      // Обработчик события обновления корзины
-      document.body.addEventListener("cart-updated", function () {
-        const notification = document.createElement("div");
-        notification.className = "notification success";
-        notification.textContent = "Товар добавлен в корзину";
-        document
-          .getElementById("notifications-container")
-          .appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
+        // Проверяем, что пользователь авторизован перед показом уведомления
+        fetch("/api/auth/me")
+          .then((response) => response.text())
+          .then((html) => {
+            if (
+              !html.includes("Войти") &&
+              evt.detail.successful &&
+              evt.detail.path === "/api/cart/add"
+            ) {
+              const notification = document.createElement("div");
+              notification.className = "notification success";
+              notification.textContent = "Товар добавлен в корзину";
+              document
+                .getElementById("notifications-container")
+                .appendChild(notification);
+              setTimeout(() => notification.remove(), 3000);
+            }
+          });
       });
     </script>
   </body>
