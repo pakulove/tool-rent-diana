@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Прайс</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   </head>
   <body>
@@ -23,10 +23,10 @@
           <h2>Фильтр по категории</h2>
           <select
             class="category-select"
+            name="category"
             hx-get="/api/prices"
             hx-target="#products-list"
             hx-trigger="change"
-            hx-include="[name='category']"
           >
             <option value="all">Все товары</option>
             <div
@@ -50,6 +50,12 @@
     <div id="notifications-container"></div>
 
     <script>
+      function logout() {
+        fetch("/api/auth/logout", { method: "POST" }).then(() =>
+          window.location.reload()
+        );
+      }
+
       document.body.addEventListener("htmx:afterRequest", function (evt) {
         if (evt.detail.path === "/api/cart/add") {
           if (evt.detail.successful) {
