@@ -493,7 +493,6 @@ app.post("/api/cart/checkout", async (req, res) => {
       order_id: order.id,
       product_id: item.product.id,
       price: item.product.price,
-      quantity: 1,
     }));
 
     const { error: itemsInsertError } = await supabase
@@ -630,7 +629,6 @@ app.get("/api/orders", async (req, res) => {
                 <div class="order-item-info">
                   <div class="order-item-name">${item.product.name}</div>
                   <div class="order-item-details">
-                    <span>${item.quantity} шт.</span>
                     <span>${item.product.price.toLocaleString("ru-RU")} ₽</span>
                   </div>
                 </div>
