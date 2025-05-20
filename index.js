@@ -556,7 +556,7 @@ app.get("/api/orders", async (req, res) => {
       .from("orders")
       .select("*")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+      .order("order_date", { ascending: false });
 
     if (ordersError) throw ordersError;
 
@@ -570,7 +570,7 @@ app.get("/api/orders", async (req, res) => {
             *,
             product:product_id (
               name,
-              image_url,
+              image,
               price
             )
           `
@@ -615,9 +615,7 @@ app.get("/api/orders", async (req, res) => {
               .map(
                 (item) => `
               <div class="order-item">
-                <img src="${item.product.image_url}" alt="${
-                  item.product.name
-                }" />
+                <img src="${item.product.image}" alt="${item.product.name}" />
                 <div class="order-item-info">
                   <div class="order-item-name">${item.product.name}</div>
                   <div class="order-item-details">
