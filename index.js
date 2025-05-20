@@ -115,34 +115,26 @@ app.post("/api/auth/logout", (req, res) => {
   res.send('<a href="/login.html">Войти</a>');
 });
 
-app.get("/api/auth/me", async (req, res) => {
-  const user_id = req.cookies.user_id;
-  if (!user_id) {
-    return res.send('<a href="/login.html">Войти</a>');
-  }
-
-  try {
-    const { data: user, error } = await supabase
+app.get("/api/auth/me", (req, res) => {
+  const userId = req.cookies.user_id;
+  if (userId) {
+    const user = supabase
       .from("user")
-      .select("id, username")
-      .eq("id", user_id)
+      .select("username")
+      .eq("id", userId)
       .single();
-
-    if (error) throw error;
-
-    if (!user) {
-      res.clearCookie("user_id");
-      return res.send('<a href="/login.html">Войти</a>');
+    if (user) {
+      res.send(`
+        <a href="/profile.html" class="profile-link">Личный кабинет</a>
+        <button onclick="logout()" class="logout-btn">Выйти</button>
+      `);
+      return;
     }
-
-    res.send(`
-      <span>Привет, ${user.username}!</span>
-      <a href="#" onclick="document.body.dispatchEvent(new Event('cart-updated')); fetch('/api/auth/logout', {method: 'POST'}).then(() => window.location.reload())">Выйти</a>
-    `);
-  } catch (err) {
-    console.error(err);
-    res.send('<a href="/login.html">Войти</a>');
   }
+  res.send(`
+    <a href="/login.html">Войти</a>
+    <a href="/register.html">Регистрация</a>
+  `);
 });
 
 app.get("/", (req, res) => {
@@ -193,12 +185,54 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// Get prices list
-app.get("/api/prices", async (req, res) => {
+// Добавим новый эндпоинт для получения категорий
+app.get("/api/categories", async (req, res) => {
   try {
-    const { data: products, error } = await supabase
+    const { data: categories, error } = await supabase
       .from("product")
-      .select("*");
+      .select("category")
+      .not("category", "is", null)
+      .order("category");
+
+    if (error) throw error;
+
+    // Получаем уникальные категории
+    const uniqueCategories = [
+      ...new Set(categories.map((cat) => cat.category)),
+    ];
+
+    const html = `
+      <button class="category-btn active" data-category="all">Все товары</button>
+      ${uniqueCategories
+        .map(
+          (cat) => `
+          <button class="category-btn" data-category="${cat}">
+            ${cat}
+          </button>
+        `
+        )
+        .join("")}
+    `;
+
+    res.send(html);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Ошибка базы данных");
+  }
+});
+
+// Обновим эндпоинт получения цен для поддержки фильтрации
+app.get("/api/prices", async (req, res) => {
+  const { category } = req.query;
+
+  try {
+    let query = supabase.from("product").select("*");
+
+    if (category && category !== "all") {
+      query = query.eq("category", category);
+    }
+
+    const { data: products, error } = await query;
 
     if (error) throw error;
 
@@ -489,6 +523,102 @@ app.post("/api/cart/save-dates", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Ошибка базы данных" });
   }
+});
+
+// Добавим новый эндпоинт для получения истории заказов
+app.get("/api/orders", (req, res) => {
+  const userId = req.cookies.user_id;
+  if (!userId) {
+    res.status(401).send("Unauthorized");
+    return;
+  }
+
+  const orders = supabase
+    .from("orders")
+    .select(
+      `
+      id,
+      created_at,
+      total_amount,
+      order_items:order_items (
+        product_id,
+        quantity,
+        price
+      ),
+      product:product_id (
+        name,
+        image
+      )
+    `
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  orders.then(({ data, error }) => {
+    if (error) {
+      console.error(error);
+      res.status(500).send("Database error");
+      return;
+    }
+
+    if (data.length === 0) {
+      res.send('<p class="no-orders">У вас пока нет заказов</p>');
+      return;
+    }
+
+    const ordersMap = new Map();
+    data.forEach((order) => {
+      if (!ordersMap.has(order.id)) {
+        ordersMap.set(order.id, {
+          id: order.id,
+          date: order.created_at,
+          total: order.total_amount,
+          items: [],
+        });
+      }
+      ordersMap.get(order.id).items.push({
+        name: order.product.name,
+        image: order.product.image,
+        price: order.order_items.price,
+        quantity: order.order_items.quantity,
+      });
+    });
+
+    const ordersList = Array.from(ordersMap.values());
+
+    const ordersHtml = ordersList
+      .map(
+        (order) => `
+          <div class="order-card">
+            <div class="order-header">
+              <div class="order-date">${new Date(
+                order.date
+              ).toLocaleString()}</div>
+              <div class="order-total">Итого: ${order.total} ₽</div>
+            </div>
+            <div class="order-items">
+              ${order.items
+                .map(
+                  (item) => `
+                    <div class="order-item">
+                      <img src="${item.image}" alt="${item.name}" />
+                      <div class="order-item-info">
+                        <div class="order-item-name">${item.name}</div>
+                        <div class="order-item-price">${item.price} ₽</div>
+                        <div class="order-item-quantity">Количество: ${item.quantity}</div>
+                      </div>
+                    </div>
+                  `
+                )
+                .join("")}
+            </div>
+          </div>
+        `
+      )
+      .join("");
+
+    res.send(ordersHtml);
+  });
 });
 
 const PORT = process.env.PORT || 3000;

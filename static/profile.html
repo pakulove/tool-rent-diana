@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Личный кабинет</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/">Главная</a>
+        <a href="/price.html">Прайс</a>
+        <div id="auth-links" hx-get="/api/auth/me" hx-trigger="load"></div>
+        <a href="/cart.html">Корзина</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="profile-container">
+        <h1>История заказов</h1>
+        <div id="orders-list" hx-get="/api/orders" hx-trigger="load">
+          <div class="loading">Загрузка заказов...</div>
+        </div>
+      </div>
+    </main>
+
+    <div id="notifications-container"></div>
+
+    <script>
+      document.body.addEventListener("htmx:afterRequest", function (evt) {
+        if (evt.detail.path === "/api/orders" && !evt.detail.successful) {
+          if (evt.detail.xhr.status === 401) {
+            window.location.href = "/login.html";
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
