@@ -335,32 +335,34 @@ main {
 
 #cart-container {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-/* Cart Styles */
 #cart {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 2rem;
-  margin-bottom: 2rem;
 }
 
-#cart h2 {
-  color: #333;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-}
-
-/* Date Picker Styles */
-.date-picker {
+.order-details {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 2rem;
-  margin-top: 2rem;
+}
+
+.date-picker {
+  margin-bottom: 2rem;
+}
+
+.date-picker h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
 }
 
 .date-picker label {
@@ -379,23 +381,48 @@ main {
   font-size: 1rem;
 }
 
-.date-picker button {
-  background: #3498db;
-  color: white;
-  border: none;
-  padding: 0.8rem 1.5rem;
+.payment-method {
+  margin-bottom: 2rem;
+}
+
+.payment-method h3 {
+  margin: 0 0 1rem;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  background: white;
+  border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payment-option:hover {
+  border-color: #007bff;
+  background: #f8f9fa;
+}
+
+.payment-option input[type="radio"] {
+  margin: 0;
+}
+
+.payment-option span {
   font-size: 1rem;
-  transition: background 0.2s;
-  width: 100%;
+  color: #333;
 }
 
-.date-picker button:hover {
-  background: #2980b9;
-}
-
-/* Cart Buttons */
 .cart-buttons {
   display: flex;
   gap: 1rem;
@@ -427,7 +454,6 @@ main {
 
 #checkout-button {
   background-color: #2ecc71;
-  color: white;
 }
 
 #checkout-button:hover {
@@ -884,49 +910,4 @@ main {
 
 .logout-btn:hover {
   background-color: #ffebee;
-}
-
-.payment-method {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.payment-method h3 {
-  margin: 0 0 1rem;
-  color: #333;
-  font-size: 1.2rem;
-}
-
-.payment-options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.payment-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.8rem;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.payment-option:hover {
-  border-color: #007bff;
-  background: #f8f9fa;
-}
-
-.payment-option input[type="radio"] {
-  margin: 0;
-}
-
-.payment-option span {
-  font-size: 1rem;
-  color: #333;
 }

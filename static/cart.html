@@ -33,13 +33,15 @@
           ></div>
         </div>
 
-        <div class="date-picker">
-          <h2>📅 Выберите даты аренды</h2>
-          <label for="start-date">Дата начала:</label>
-          <input type="date" id="start-date" name="start-date" required />
+        <div class="order-details">
+          <div class="date-picker">
+            <h2>📅 Выберите даты аренды</h2>
+            <label for="start-date">Дата начала:</label>
+            <input type="date" id="start-date" name="start-date" required />
 
-          <label for="end-date">Дата окончания:</label>
-          <input type="date" id="end-date" name="end-date" required />
+            <label for="end-date">Дата окончания:</label>
+            <input type="date" id="end-date" name="end-date" required />
+          </div>
 
           <div class="payment-method">
             <h3>💳 Способ оплаты</h3>
@@ -127,34 +129,6 @@
               window.location.href = "/login.html";
             }
           });
-      });
-
-      // Обработка ошибок авторизации
-      document.body.addEventListener("htmx:afterRequest", function (evt) {
-        if (evt.detail.path === "/api/orders") {
-          if (evt.detail.successful) {
-            const notification = document.createElement("div");
-            notification.className = "notification success";
-            notification.textContent = "✅ Заказ успешно оформлен!";
-            document
-              .getElementById("notifications-container")
-              .appendChild(notification);
-            setTimeout(() => {
-              notification.remove();
-              window.location.href = "/profile.html";
-            }, 2000);
-          } else if (evt.detail.xhr.status === 401) {
-            window.location.href = "/login.html";
-          } else {
-            const notification = document.createElement("div");
-            notification.className = "notification error";
-            notification.textContent = "❌ Ошибка при оформлении заказа";
-            document
-              .getElementById("notifications-container")
-              .appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
-          }
-        }
       });
 
       function validateDates() {
