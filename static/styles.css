@@ -777,7 +777,7 @@ main {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 1rem;
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
 .order-header {
@@ -789,14 +789,29 @@ main {
   border-bottom: 1px solid #eee;
 }
 
-.order-date {
+.order-info {
+  display: flex;
+  gap: 2rem;
   color: #666;
   font-size: 0.9rem;
+}
+
+.order-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.order-payment {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .order-total {
   font-weight: bold;
   color: #333;
+  font-size: 1.1rem;
 }
 
 .order-items {
@@ -808,7 +823,7 @@ main {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.5rem;
+  padding: 1rem;
   background: #f9f9f9;
   border-radius: 4px;
 }
@@ -829,12 +844,9 @@ main {
   margin-bottom: 0.25rem;
 }
 
-.order-item-price {
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.order-item-quantity {
+.order-item-details {
+  display: flex;
+  gap: 1rem;
   color: #666;
   font-size: 0.9rem;
 }
@@ -869,4 +881,49 @@ main {
 
 .logout-btn:hover {
   background-color: #ffebee;
+}
+
+.payment-method {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.payment-method h3 {
+  margin: 0 0 1rem;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.payment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payment-option:hover {
+  border-color: #007bff;
+  background: #f8f9fa;
+}
+
+.payment-option input[type="radio"] {
+  margin: 0;
+}
+
+.payment-option span {
+  font-size: 1rem;
+  color: #333;
 }
