@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Прайс</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="/styles.css" />
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   </head>
   <body>
@@ -18,38 +18,52 @@
     </header>
 
     <main>
-      <h1>Прайс-лист</h1>
-      <div
-        class="price-list"
-        id="price-list"
-        hx-get="/api/prices"
-        hx-trigger="load"
-      ></div>
+      <div class="price-container">
+        <div class="category-filter">
+          <h2>Фильтр по категории</h2>
+          <select
+            class="category-select"
+            hx-get="/api/prices"
+            hx-target="#products-list"
+            hx-trigger="change"
+            hx-include="[name='category']"
+          >
+            <option value="all">Все товары</option>
+            <div
+              hx-get="/api/categories"
+              hx-trigger="load"
+              hx-swap="innerHTML"
+            ></div>
+          </select>
+        </div>
+        <div
+          class="price-list"
+          id="products-list"
+          hx-get="/api/prices"
+          hx-trigger="load"
+        >
+          <div class="loading">Загрузка товаров...</div>
+        </div>
+      </div>
     </main>
 
     <div id="notifications-container"></div>
 
     <script>
       document.body.addEventListener("htmx:afterRequest", function (evt) {
-        if (evt.detail.xhr.status === 401) {
-          const response = JSON.parse(evt.detail.xhr.response);
-          window.location.href = response.redirect;
-        } else if (
-          evt.detail.successful &&
-          evt.detail.path === "/api/cart/add"
-        ) {
-          document.body.dispatchEvent(new Event("cart-updated"));
+        if (evt.detail.path === "/api/cart/add") {
+          if (evt.detail.successful) {
+            const notification = document.createElement("div");
+            notification.className = "notification success";
+            notification.textContent = "Товар добавлен в корзину";
+            document
+              .getElementById("notifications-container")
+              .appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+          } else if (evt.detail.xhr.status === 401) {
+            window.location.href = "/login.html";
+          }
         }
-      });
-
-      document.body.addEventListener("cart-updated", function () {
-        const notification = document.createElement("div");
-        notification.className = "notification success";
-        notification.textContent = "Товар добавлен в корзину";
-        document
-          .getElementById("notifications-container")
-          .appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
       });
     </script>
   </body>

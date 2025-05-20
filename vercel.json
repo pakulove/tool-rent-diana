@@ -32,12 +32,16 @@
       "dest": "/static/register.html"
     },
     {
+      "src": "/profile.html",
+      "dest": "/static/profile.html"
+    },
+    {
       "src": "/images/(.*)",
       "dest": "/static/images/$1"
     },
     {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
+      "src": "/api/(.*)",
+      "dest": "/index.js"
     },
     {
       "src": "/(.*)",

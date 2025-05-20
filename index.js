@@ -201,18 +201,13 @@ app.get("/api/categories", async (req, res) => {
       ...new Set(categories.map((cat) => cat.category)),
     ];
 
-    const html = `
-      <button class="category-btn active" data-category="all">Все товары</button>
-      ${uniqueCategories
-        .map(
-          (cat) => `
-          <button class="category-btn" data-category="${cat}">
-            ${cat}
-          </button>
+    const html = uniqueCategories
+      .map(
+        (cat) => `
+          <option value="${cat}">${cat}</option>
         `
-        )
-        .join("")}
-    `;
+      )
+      .join("");
 
     res.send(html);
   } catch (err) {
