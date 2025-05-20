@@ -27,10 +27,12 @@
             hx-get="/api/prices"
             hx-target="#products-list"
             hx-trigger="change"
-            hx-get="/api/categories"
-            hx-trigger="load"
           >
-            <option value="all">Загрузка категорий...</option>
+            <div
+              hx-get="/api/categories"
+              hx-trigger="load"
+              hx-swap="innerHTML"
+            ></div>
           </select>
         </div>
         <div

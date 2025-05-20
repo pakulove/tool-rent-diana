@@ -185,27 +185,39 @@ app.get("/api/products", async (req, res) => {
 // Добавим новый эндпоинт для получения категорий
 app.get("/api/categories", async (req, res) => {
   try {
+    console.log("Fetching categories from product table...");
+
     const { data: products, error } = await supabase
       .from("product")
-      .select("category")
-      .not("category", "is", null);
+      .select("category");
 
-    if (error) throw error;
+    console.log("Supabase response:", { products, error });
+
+    if (error) {
+      console.error("Supabase error:", error);
+      throw error;
+    }
 
     // Получаем уникальные категории и сортируем их
-    const categories = [...new Set(products.map((p) => p.category))].sort();
+    const categories = [...new Set(products.map((p) => p.category))]
+      .filter(Boolean)
+      .sort();
+    console.log("Extracted categories:", categories);
 
     // Генерируем HTML для select
     const options = categories
       .map((category) => `<option value="${category}">${category}</option>`)
       .join("");
 
-    res.send(`
+    const html = `
       <option value="all">Все товары</option>
       ${options}
-    `);
+    `;
+
+    console.log("Generated HTML:", html);
+    res.send(html);
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    console.error("Error in /api/categories:", error);
     res.status(500).send("Error fetching categories");
   }
 });
