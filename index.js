@@ -423,6 +423,16 @@ app.post("/api/cart/checkout", async (req, res) => {
     });
   }
 
+  const {
+    "start-date": start_date,
+    "end-date": end_date,
+    payment: payment_method,
+  } = req.body;
+
+  if (!start_date || !end_date) {
+    return res.status(400).json({ error: "Даты обязательны" });
+  }
+
   try {
     // Get cart items
     const { data: items, error: itemsError } = await supabase
@@ -454,6 +464,10 @@ app.post("/api/cart/checkout", async (req, res) => {
         {
           user_id,
           total_amount: total,
+          order_date: new Date().toISOString(),
+          start_date,
+          end_date,
+          payment_method,
         },
       ])
       .select()
@@ -466,6 +480,7 @@ app.post("/api/cart/checkout", async (req, res) => {
       order_id: order.id,
       product_id: item.product.id,
       price: item.product.price,
+      quantity: 1,
     }));
 
     const { error: itemsInsertError } = await supabase
@@ -528,26 +543,22 @@ app.post("/api/cart/save-dates", async (req, res) => {
 
 // Добавим новый эндпоинт для получения истории заказов
 app.get("/api/orders", async (req, res) => {
-  const userId = req.cookies.user_id;
-  if (!userId) {
-    res.status(401).send("Unauthorized");
-    return;
-  }
-
   try {
-    // Сначала получаем заказы
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    // Получаем заказы пользователя
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
-      .select("id, created_at, total_amount")
-      .eq("user_id", userId)
+      .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (ordersError) throw ordersError;
-
-    if (!orders || orders.length === 0) {
-      res.send('<p class="no-orders">У вас пока нет заказов</p>');
-      return;
-    }
 
     // Для каждого заказа получаем его товары
     const ordersWithItems = await Promise.all(
@@ -556,11 +567,11 @@ app.get("/api/orders", async (req, res) => {
           .from("order_items")
           .select(
             `
-            quantity,
-            price,
+            *,
             product:product_id (
               name,
-              image
+              image_url,
+              price
             )
           `
           )
@@ -570,51 +581,64 @@ app.get("/api/orders", async (req, res) => {
 
         return {
           ...order,
-          items: orderItems.map((item) => ({
-            name: item.product.name,
-            image: item.product.image,
-            price: item.price,
-            quantity: item.quantity,
-          })),
+          items: orderItems,
         };
       })
     );
 
+    // Формируем HTML для отображения заказов
     const ordersHtml = ordersWithItems
       .map(
         (order) => `
-          <div class="order-card">
-            <div class="order-header">
-              <div class="order-date">${new Date(
-                order.created_at
-              ).toLocaleString()}</div>
-              <div class="order-total">Итого: ${order.total_amount} ₽</div>
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-info">
+              <div class="order-date">
+                <i class="far fa-calendar"></i>
+                ${new Date(order.order_date).toLocaleDateString("ru-RU")}
+              </div>
+              <div class="order-payment">
+                <i class="fas fa-credit-card"></i>
+                ${
+                  order.payment_method === "card"
+                    ? "💳 Банковская карта"
+                    : "💵 Наличные"
+                }
+              </div>
             </div>
-            <div class="order-items">
-              ${order.items
-                .map(
-                  (item) => `
-                    <div class="order-item">
-                      <img src="${item.image}" alt="${item.name}" />
-                      <div class="order-item-info">
-                        <div class="order-item-name">${item.name}</div>
-                        <div class="order-item-price">${item.price} ₽</div>
-                        <div class="order-item-quantity">Количество: ${item.quantity}</div>
-                      </div>
-                    </div>
-                  `
-                )
-                .join("")}
+            <div class="order-total">
+              ${order.total_amount.toLocaleString("ru-RU")} ₽
             </div>
           </div>
-        `
+          <div class="order-items">
+            ${order.items
+              .map(
+                (item) => `
+              <div class="order-item">
+                <img src="${item.product.image_url}" alt="${
+                  item.product.name
+                }" />
+                <div class="order-item-info">
+                  <div class="order-item-name">${item.product.name}</div>
+                  <div class="order-item-details">
+                    <span>${item.quantity} шт.</span>
+                    <span>${item.product.price.toLocaleString("ru-RU")} ₽</span>
+                  </div>
+                </div>
+              </div>
+            `
+              )
+              .join("")}
+          </div>
+        </div>
+      `
       )
       .join("");
 
-    res.send(ordersHtml);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Ошибка базы данных");
+    res.send(ordersHtml || "<p>У вас пока нет заказов</p>");
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).send("Error fetching orders");
   }
 });
 
