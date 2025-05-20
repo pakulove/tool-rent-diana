@@ -165,7 +165,6 @@ main {
   transition: background-color 0.3s;
 }
 
-
 #clear-cart-button {
   background-color: #dc3545;
 }
@@ -723,7 +722,7 @@ main {
 }
 
 .price-item button {
-  background-color: #4caf50;
+  background-color: #007bff;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -733,7 +732,7 @@ main {
 }
 
 .price-item button:hover {
-  background-color: #45a049;
+  background-color: #0056b3;
 }
 
 .notification {

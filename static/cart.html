@@ -50,20 +50,6 @@
           onchange="validateDates()"
         />
 
-        <button
-          hx-post="/api/cart/save-dates"
-          hx-include="[name='rental_start'], [name='rental_end']"
-          hx-swap="none"
-          hx-trigger="click"
-          hx-on::before-request="
-            if (!validateDates()) {
-              event.preventDefault();
-              return false;
-            }
-          "
-        >
-          Сохранить даты
-        </button>
       </div>
 
       <div id="cart-buttons">
