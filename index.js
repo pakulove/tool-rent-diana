@@ -465,8 +465,8 @@ app.post("/api/cart/checkout", async (req, res) => {
           user_id,
           total_amount: total,
           order_date: new Date().toISOString(),
-          start_date,
-          end_date,
+          rental_start: start_date,
+          rental_end: end_date,
           payment_method,
         },
       ])
