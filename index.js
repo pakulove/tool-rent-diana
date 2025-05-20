@@ -131,10 +131,7 @@ app.get("/api/auth/me", (req, res) => {
       return;
     }
   }
-  res.send(`
-    <a href="/login.html">Войти</a>
-    <a href="/register.html">Регистрация</a>
-  `);
+  res.send('<a href="/login.html">Войти</a>');
 });
 
 app.get("/", (req, res) => {
@@ -188,31 +185,28 @@ app.get("/api/products", async (req, res) => {
 // Добавим новый эндпоинт для получения категорий
 app.get("/api/categories", async (req, res) => {
   try {
-    const { data: categories, error } = await supabase
+    const { data: products, error } = await supabase
       .from("product")
       .select("category")
-      .not("category", "is", null)
-      .order("category");
+      .not("category", "is", null);
 
     if (error) throw error;
 
-    // Получаем уникальные категории
-    const uniqueCategories = [
-      ...new Set(categories.map((cat) => cat.category)),
-    ];
+    // Получаем уникальные категории и сортируем их
+    const categories = [...new Set(products.map((p) => p.category))].sort();
 
-    const html = uniqueCategories
-      .map(
-        (cat) => `
-          <option value="${cat}">${cat}</option>
-        `
-      )
+    // Генерируем HTML для select
+    const options = categories
+      .map((category) => `<option value="${category}">${category}</option>`)
       .join("");
 
-    res.send(html);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Ошибка базы данных");
+    res.send(`
+      <option value="all">Все товары</option>
+      ${options}
+    `);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).send("Error fetching categories");
   }
 });
 

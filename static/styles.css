@@ -629,83 +629,107 @@ main {
 }
 
 /* Price page styles */
+.price-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.category-filter {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.category-select {
+  width: 300px;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 1rem;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.category-select:hover {
+  border-color: #007bff;
+}
+
+.category-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
 .price-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
 }
 
 .price-item {
-  position: relative;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  padding: 10px;
-  width: 200px;
-  text-align: center;
-  background-color: #fff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s;
-}
-
-.price-item:hover {
-  transform: scale(1.05);
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .price-item img {
   width: 100%;
-  height: auto;
-  border-radius: 5px;
-  margin-bottom: 10px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 1rem;
 }
 
 .price-item h2 {
-  font-size: 1.2em;
-  margin-bottom: 10px;
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+  color: #333;
 }
 
 .price-item p {
-  font-size: 1em;
-  margin-bottom: 10px;
+  margin: 0 0 1rem;
+  color: #666;
 }
 
 .price-info {
-  position: absolute;
-  top: 0;
-  left: auto;
-  right: 100%;
-  width: 200px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-10px);
-  transition: opacity 0.3s, transform 0.3s;
-  z-index: 10;
+  margin-top: auto;
 }
 
-.price-item:hover .price-info {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0);
+.price-info p {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.price-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.price-info li {
+  color: #666;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
 }
 
 .price-item button {
-  background-color: #4caf50;
+  width: 100%;
+  padding: 0.8rem;
+  background: #007bff;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s;
 }
 
 .price-item button:hover {
-  background-color: #45a049;
+  background: #0056b3;
 }
 
 /* Notification styles */
@@ -842,78 +866,4 @@ main {
 
 .logout-btn:hover {
   background-color: #ffebee;
-}
-
-.price-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  display: grid;
-  grid-template-columns: 250px 1fr;
-  gap: 2rem;
-}
-
-.category-filter {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  height: fit-content;
-}
-
-.category-filter h2 {
-  margin: 0 0 1rem;
-  color: #333;
-  font-size: 1.2rem;
-}
-
-.category-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.category-btn {
-  background: none;
-  border: 1px solid #ddd;
-  padding: 0.8rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.2s;
-  color: #333;
-  font-size: 1rem;
-}
-
-.category-btn:hover {
-  background: #f5f5f5;
-  border-color: #ccc;
-}
-
-.category-btn.active {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
-.category-select {
-  width: 100%;
-  padding: 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: white;
-  font-size: 1rem;
-  color: #333;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.category-select:hover {
-  border-color: #007bff;
-}
-
-.category-select:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
