@@ -521,75 +521,68 @@ app.post("/api/cart/save-dates", async (req, res) => {
 });
 
 // Добавим новый эндпоинт для получения истории заказов
-app.get("/api/orders", (req, res) => {
+app.get("/api/orders", async (req, res) => {
   const userId = req.cookies.user_id;
   if (!userId) {
     res.status(401).send("Unauthorized");
     return;
   }
 
-  const orders = supabase
-    .from("orders")
-    .select(
-      `
-      id,
-      created_at,
-      total_amount,
-      order_items:order_items (
-        product_id,
-        quantity,
-        price
-      ),
-      product:product_id (
-        name,
-        image
-      )
-    `
-    )
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  try {
+    // Сначала получаем заказы
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select("id, created_at, total_amount")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-  orders.then(({ data, error }) => {
-    if (error) {
-      console.error(error);
-      res.status(500).send("Database error");
-      return;
-    }
+    if (ordersError) throw ordersError;
 
-    if (data.length === 0) {
+    if (!orders || orders.length === 0) {
       res.send('<p class="no-orders">У вас пока нет заказов</p>');
       return;
     }
 
-    const ordersMap = new Map();
-    data.forEach((order) => {
-      if (!ordersMap.has(order.id)) {
-        ordersMap.set(order.id, {
-          id: order.id,
-          date: order.created_at,
-          total: order.total_amount,
-          items: [],
-        });
-      }
-      ordersMap.get(order.id).items.push({
-        name: order.product.name,
-        image: order.product.image,
-        price: order.order_items.price,
-        quantity: order.order_items.quantity,
-      });
-    });
+    // Для каждого заказа получаем его товары
+    const ordersWithItems = await Promise.all(
+      orders.map(async (order) => {
+        const { data: orderItems, error: itemsError } = await supabase
+          .from("order_items")
+          .select(
+            `
+            quantity,
+            price,
+            product:product_id (
+              name,
+              image
+            )
+          `
+          )
+          .eq("order_id", order.id);
 
-    const ordersList = Array.from(ordersMap.values());
+        if (itemsError) throw itemsError;
 
-    const ordersHtml = ordersList
+        return {
+          ...order,
+          items: orderItems.map((item) => ({
+            name: item.product.name,
+            image: item.product.image,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        };
+      })
+    );
+
+    const ordersHtml = ordersWithItems
       .map(
         (order) => `
           <div class="order-card">
             <div class="order-header">
               <div class="order-date">${new Date(
-                order.date
+                order.created_at
               ).toLocaleString()}</div>
-              <div class="order-total">Итого: ${order.total} ₽</div>
+              <div class="order-total">Итого: ${order.total_amount} ₽</div>
             </div>
             <div class="order-items">
               ${order.items
@@ -613,7 +606,10 @@ app.get("/api/orders", (req, res) => {
       .join("");
 
     res.send(ordersHtml);
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Ошибка базы данных");
+  }
 });
 
 const PORT = process.env.PORT || 3000;
