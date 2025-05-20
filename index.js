@@ -111,7 +111,10 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 app.post("/api/auth/logout", (req, res) => {
-  res.clearCookie("user_id");
+  res.clearCookie("user_id", {
+    httpOnly: true,
+    path: "/",
+  });
   res.send('<a href="/login.html">Войти</a>');
 });
 
@@ -232,9 +235,20 @@ app.get("/api/prices", async (req, res) => {
 
     if (error) throw error;
 
-    let html = "";
+    // Получаем уникальные категории из продуктов
+    const categories = [...new Set(products.map((p) => p.category))]
+      .filter(Boolean)
+      .sort();
+
+    // Генерируем HTML для select с категориями
+    const categoriesHtml = categories
+      .map((cat) => `<option value="${cat}">${cat}</option>`)
+      .join("");
+
+    // Генерируем HTML для списка продуктов
+    let productsHtml = "";
     products.forEach((product) => {
-      html += `
+      productsHtml += `
         <div class="price-item">
           <img src="${product.image}" alt="${product.name}" />
           <h2>${product.name}</h2>
@@ -260,7 +274,14 @@ app.get("/api/prices", async (req, res) => {
         </div>
       `;
     });
-    res.send(html);
+
+    // Отправляем оба HTML-блока
+    res.send(`
+      <div id="categories-container" style="display: none;">
+        ${categoriesHtml}
+      </div>
+      ${productsHtml}
+    `);
   } catch (err) {
     console.error(err);
     res.status(500).send("Ошибка базы данных");
