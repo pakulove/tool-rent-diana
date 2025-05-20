@@ -61,5 +61,26 @@
     </main>
 
     <div id="notifications-container"></div>
+
+    <script>
+      function showNotification(message, type = "success") {
+        const notification = document.createElement("div");
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document
+          .getElementById("notifications-container")
+          .appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+      }
+
+      function logout() {
+        fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        }).then(() => {
+          window.location.href = "/";
+        });
+      }
+    </script>
   </body>
 </html>
