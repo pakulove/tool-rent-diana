@@ -555,90 +555,94 @@ app.post("/api/cart/save-dates", async (req, res) => {
 
 // Добавим новый эндпоинт для получения истории заказов
 app.get("/api/orders", async (req, res) => {
-  try {
-    const user_id = req.cookies.user_id;
-    if (!user_id) {
-      return res.status(401).send("Unauthorized");
-    }
+  const user_id = req.cookies.user_id;
+  if (!user_id) {
+    return res.status(401).send("Unauthorized");
+  }
 
+  try {
+    // Получаем заказы пользователя
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
-      .select(
-        `
-        *,
-        order_items (
-          *,
-          product:products (
-            name,
-            price
-          )
-        ),
-        rental_dates (
-          start_date,
-          end_date
-        )
-      `
-      )
+      .select("*")
       .eq("user_id", user_id)
-      .order("created_at", { ascending: false });
+      .order("order_date", { ascending: false });
 
     if (ordersError) throw ordersError;
 
-    const ordersHtml = orders
-      .map((order) => {
-        const itemsHtml = order.order_items
-          .map(
-            (item) => `
-              <div class="order-item">
-                <span class="item-name">${item.product.name}</span>
-                <span class="item-quantity">x${item.quantity}</span>
-                <span class="item-price">${item.product.price} ₽/день</span>
-              </div>
+    // Для каждого заказа получаем его товары
+    const ordersWithItems = await Promise.all(
+      orders.map(async (order) => {
+        const { data: orderItems, error: itemsError } = await supabase
+          .from("order_items")
+          .select(
             `
+            *,
+            product:product_id (
+              name,
+              image,
+              price
+            )
+          `
           )
-          .join("");
+          .eq("order_id", order.id);
 
-        const rentalDates = order.rental_dates[0];
-        const startDate = new Date(rentalDates.start_date).toLocaleDateString(
-          "ru-RU"
-        );
-        const endDate = new Date(rentalDates.end_date).toLocaleDateString(
-          "ru-RU"
-        );
-        const daysDiff = Math.ceil(
-          (new Date(rentalDates.end_date) - new Date(rentalDates.start_date)) /
-            (1000 * 60 * 60 * 24)
-        );
+        if (itemsError) throw itemsError;
 
-        return `
-          <div class="order">
-            <div class="order-header">
-              <span class="order-date">${new Date(
-                order.created_at
-              ).toLocaleDateString("ru-RU")}</span>
-              <span class="order-status">${
-                order.status === "completed"
-                  ? "✅ Выполнен"
-                  : order.status === "cancelled"
-                  ? "❌ Отменен"
-                  : "⏳ В обработке"
-              }</span>
-            </div>
-            <div class="order-dates">
-              <span class="rental-period">Период аренды: ${startDate} - ${endDate} (${daysDiff} дней)</span>
-            </div>
-            <div class="order-items">
-              ${itemsHtml}
+        return {
+          ...order,
+          items: orderItems,
+        };
+      })
+    );
+
+    // Формируем HTML для отображения заказов
+    const ordersHtml = ordersWithItems
+      .map(
+        (order) => `
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-info">
+              <div class="order-date">
+                <i class="far fa-calendar"></i>
+                ${new Date(order.order_date).toLocaleDateString("ru-RU")}
+              </div>
+              <div class="order-payment">
+                <i class="fas fa-credit-card"></i>
+                ${
+                  order.payment_method === "card"
+                    ? "💳 Банковская карта"
+                    : "💵 Наличные"
+                }
+              </div>
             </div>
             <div class="order-total">
-              Итого: ${order.total_amount} ₽
+              ${order.total_amount.toLocaleString("ru-RU")} ₽
             </div>
           </div>
-        `;
-      })
+          <div class="order-items">
+            ${order.items
+              .map(
+                (item) => `
+              <div class="order-item">
+                <img src="${item.product.image}" alt="${item.product.name}" />
+                <div class="order-item-info">
+                  <div class="order-item-name">${item.product.name}</div>
+                  <div class="order-item-details">
+                    <span>${item.product.price.toLocaleString("ru-RU")} ₽</span>
+                  </div>
+                </div>
+              </div>
+            `
+              )
+              .join("")}
+          </div>
+        </div>
+      `
+      )
       .join("");
 
-    res.send(ordersHtml);
+    res.send(ordersHtml || "<p>У вас пока нет заказов</p>");
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).send("Error fetching orders");
