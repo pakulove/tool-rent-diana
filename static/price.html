@@ -20,7 +20,6 @@
     <main>
       <div class="price-container">
         <div class="category-filter">
-          <h2>Фильтр по категории</h2>
           <select
             class="category-select"
             name="category"
@@ -28,6 +27,7 @@
             hx-target="#products-list"
             hx-trigger="change"
           >
+            <option value="all">Все товары</option>
             <div
               hx-get="/api/categories"
               hx-trigger="load"

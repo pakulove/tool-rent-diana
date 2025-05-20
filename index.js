@@ -209,13 +209,8 @@ app.get("/api/categories", async (req, res) => {
       .map((category) => `<option value="${category}">${category}</option>`)
       .join("");
 
-    const html = `
-      <option value="all">Все товары</option>
-      ${options}
-    `;
-
-    console.log("Generated HTML:", html);
-    res.send(html);
+    console.log("Generated HTML:", options);
+    res.send(options);
   } catch (error) {
     console.error("Error in /api/categories:", error);
     res.status(500).send("Error fetching categories");
