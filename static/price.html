@@ -28,6 +28,11 @@
             hx-trigger="change"
           >
             <option value="all">Все товары</option>
+            <div
+              hx-get="/api/categories"
+              hx-trigger="load"
+              hx-swap="innerHTML"
+            ></div>
           </select>
         </div>
         <div

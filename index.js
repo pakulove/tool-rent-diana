@@ -235,16 +235,6 @@ app.get("/api/prices", async (req, res) => {
 
     if (error) throw error;
 
-    // Получаем уникальные категории из продуктов
-    const categories = [...new Set(products.map((p) => p.category))]
-      .filter(Boolean)
-      .sort();
-
-    // Генерируем HTML для select с категориями
-    const categoriesHtml = categories
-      .map((cat) => `<option value="${cat}">${cat}</option>`)
-      .join("");
-
     // Генерируем HTML для списка продуктов
     let productsHtml = "";
     products.forEach((product) => {
@@ -275,13 +265,7 @@ app.get("/api/prices", async (req, res) => {
       `;
     });
 
-    // Отправляем оба HTML-блока
-    res.send(`
-      <div id="categories-container" style="display: none;">
-        ${categoriesHtml}
-      </div>
-      ${productsHtml}
-    `);
+    res.send(productsHtml);
   } catch (err) {
     console.error(err);
     res.status(500).send("Ошибка базы данных");
