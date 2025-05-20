@@ -457,6 +457,21 @@ app.post("/api/cart/checkout", async (req, res) => {
 
     const total = items.reduce((sum, item) => sum + item.product.price, 0);
 
+    // Сначала создаем запись в rental_dates
+    const { data: rentalDates, error: rentalError } = await supabase
+      .from("rental_dates")
+      .insert([
+        {
+          user_id,
+          start_date,
+          end_date,
+        },
+      ])
+      .select()
+      .single();
+
+    if (rentalError) throw rentalError;
+
     // Create order
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -465,8 +480,6 @@ app.post("/api/cart/checkout", async (req, res) => {
           user_id,
           total_amount: total,
           order_date: new Date().toISOString(),
-          rental_start: start_date,
-          rental_end: end_date,
           payment_method,
         },
       ])
@@ -543,19 +556,17 @@ app.post("/api/cart/save-dates", async (req, res) => {
 
 // Добавим новый эндпоинт для получения истории заказов
 app.get("/api/orders", async (req, res) => {
-  try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return res.status(401).send("Unauthorized");
-    }
+  const user_id = req.cookies.user_id;
+  if (!user_id) {
+    return res.status(401).send("Unauthorized");
+  }
 
+  try {
     // Получаем заказы пользователя
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", user_id)
       .order("order_date", { ascending: false });
 
     if (ordersError) throw ordersError;
