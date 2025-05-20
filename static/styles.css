@@ -911,3 +911,51 @@ main {
 .logout-btn:hover {
   background-color: #ffebee;
 }
+
+.card-fields {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.card-fields .form-group {
+  margin-bottom: 1rem;
+}
+
+.card-fields .form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.card-fields .form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.card-fields label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.card-fields input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.card-fields input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.card-fields input::placeholder {
+  color: #999;
+}
