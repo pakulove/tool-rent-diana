@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS rental_dates (
 );
 
 -- Insert sample products
-INSERT INTO product (name, price, image, characteristic) VALUES
+INSERT INTO product (name, price, image, category, characteristic) VALUES
     ('Дрель Trigger', 500, 'images/drel.jpg','Дрели и перфораторы', 'Мощность: 750 Вт, Скорость: 3000 об/мин, Вес: 1.5 кг'),
     ('Шуруповерт Makita', 400, 'images/shyryp.jpg','Шуруповерты', 'Мощность: 18 В (аккумуляторный), Крутящий момент: 50 Н·м, Вес: 1.3 кг'),
     ('Стремянка', 300, 'images/lestnica.png','Прочее', 'Высота: 4 ступени (примерно 1.5 м), Материал: алюминий, Макс. нагрузка: 150 кг'),
