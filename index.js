@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const pool = require("./config");
 const app = express();
 
