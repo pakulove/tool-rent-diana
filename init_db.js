@@ -1,4 +1,4 @@
-const supabase = require("./config");
+const pool = require("./config");
 const fs = require("fs");
 const path = require("path");
 
@@ -15,17 +15,15 @@ async function initializeDatabase() {
 
     // Execute each statement
     for (const statement of statements) {
-      const { error } = await supabase.rpc("exec_sql", { sql: statement });
-      if (error) {
-        console.error("Error executing statement:", error);
-        throw error;
-      }
+      await pool.query(statement);
     }
 
     console.log("Database initialized successfully");
   } catch (err) {
     console.error("Error initializing database:", err);
     throw err;
+  } finally {
+    await pool.end();
   }
 }
 
