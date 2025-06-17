@@ -49,3 +49,5 @@ INSERT INTO product (name, price, image, characteristic) VALUES
     ('Болгарка Bosch', 400, 'images/bolgarka.webp', 'Мощность: 1100 Вт, Диаметр диска: 125 мм, Вес: 2.4 кг'),
     ('Перфоратор Makita', 650, 'images/perforator.webp', 'Мощность: 800 Вт, Энергия удара: 3 Дж, Вес: 2.8 кг')
 ON CONFLICT (id) DO NOTHING; 
+
+SELECT setval('product_id_seq', (SELECT COALESCE(MAX(id), 0) + 1 FROM product), false);

@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: diana-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - diana-network
+
+  app:
+    build: .
+    container_name: diana-app
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - PORT=${PORT}
+      - HOST=${HOST}
+    depends_on:
+      - postgres
+    networks:
+      - diana-network
+
+networks:
+  diana-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

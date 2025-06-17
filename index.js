@@ -3,7 +3,7 @@ const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
-const supabase = require("./config");
+const pool = require("./config");
 const app = express();
 
 // Basic middleware
@@ -26,17 +26,12 @@ app.post("/api/auth/register", async (req, res) => {
 
   try {
     // Check if user already exists
-    const { data: existingUser, error: checkError } = await supabase
-      .from("user")
-      .select("id")
-      .eq("username", username)
-      .single();
+    const { rows: existingUsers } = await pool.query(
+      'SELECT id FROM "user" WHERE username = $1',
+      [username]
+    );
 
-    if (checkError && checkError.code !== "PGRST116") {
-      throw checkError;
-    }
-
-    if (existingUser) {
+    if (existingUsers.length > 0) {
       return res.status(400).json({ error: "Пользователь уже существует" });
     }
 
@@ -44,13 +39,12 @@ app.post("/api/auth/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const { data: newUser, error: createError } = await supabase
-      .from("user")
-      .insert([{ username, password: hashedPassword }])
-      .select()
-      .single();
-
-    if (createError) throw createError;
+    const {
+      rows: [newUser],
+    } = await pool.query(
+      'INSERT INTO "user" (username, password) VALUES ($1, $2) RETURNING id',
+      [username, hashedPassword]
+    );
 
     // Set cookie
     res.cookie("user_id", newUser.id, {
@@ -76,13 +70,12 @@ app.post("/api/auth/login", async (req, res) => {
 
   try {
     // Get user
-    const { data: user, error } = await supabase
-      .from("user")
-      .select("id, password")
-      .eq("username", username)
-      .single();
-
-    if (error) throw error;
+    const {
+      rows: [user],
+    } = await pool.query(
+      'SELECT id, password FROM "user" WHERE username = $1',
+      [username]
+    );
 
     if (!user) {
       return res
@@ -119,14 +112,12 @@ app.post("/api/auth/logout", (req, res) => {
   res.send('<a href="/login.html">Войти</a>');
 });
 
-app.get("/api/auth/me", (req, res) => {
+app.get("/api/auth/me", async (req, res) => {
   const userId = req.cookies.user_id;
   if (userId) {
-    const user = supabase
-      .from("user")
-      .select("username")
-      .eq("id", userId)
-      .single();
+    const {
+      rows: [user],
+    } = await pool.query('SELECT username FROM "user" WHERE id = $1', [userId]);
     if (user) {
       res.send(`
         <a href="/profile.html" class="profile-link">Личный кабинет</a>
@@ -145,11 +136,7 @@ app.get("/", (req, res) => {
 // Get products list
 app.get("/api/products", async (req, res) => {
   try {
-    const { data: products, error } = await supabase
-      .from("product")
-      .select("*");
-
-    if (error) throw error;
+    const { rows: products } = await pool.query("SELECT * FROM product");
 
     let html = "";
     products.forEach((product) => {
@@ -186,34 +173,18 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// Добавим новый эндпоинт для получения категорий
+// Get categories
 app.get("/api/categories", async (req, res) => {
   try {
-    console.log("Fetching categories from product table...");
+    const { rows: products } = await pool.query(
+      "SELECT DISTINCT category FROM product WHERE category IS NOT NULL"
+    );
 
-    const { data: products, error } = await supabase
-      .from("product")
-      .select("category");
-
-    console.log("Supabase response:", { products, error });
-
-    if (error) {
-      console.error("Supabase error:", error);
-      throw error;
-    }
-
-    // Получаем уникальные категории и сортируем их
-    const categories = [...new Set(products.map((p) => p.category))]
-      .filter(Boolean)
-      .sort();
-    console.log("Extracted categories:", categories);
-
-    // Генерируем HTML для select
+    const categories = products.map((p) => p.category).sort();
     const options = categories
       .map((category) => `<option value="${category}">${category}</option>`)
       .join("");
 
-    console.log("Generated HTML:", options);
     res.send(options);
   } catch (error) {
     console.error("Error in /api/categories:", error);
@@ -221,22 +192,21 @@ app.get("/api/categories", async (req, res) => {
   }
 });
 
-// Обновим эндпоинт получения цен для поддержки фильтрации
+// Get prices with filtering
 app.get("/api/prices", async (req, res) => {
   const { category } = req.query;
 
   try {
-    let query = supabase.from("product").select("*");
+    let query = "SELECT * FROM product";
+    const params = [];
 
     if (category && category !== "all") {
-      query = query.eq("category", category);
+      query += " WHERE category = $1";
+      params.push(category);
     }
 
-    const { data: products, error } = await query;
+    const { rows: products } = await pool.query(query, params);
 
-    if (error) throw error;
-
-    // Генерируем HTML для списка продуктов
     let productsHtml = "";
     products.forEach((product) => {
       productsHtml += `
@@ -284,31 +254,23 @@ app.get("/api/cart/items", async (req, res) => {
   }
 
   try {
-    const { data: items, error } = await supabase
-      .from("cart")
-      .select(
-        `
-        id,
-        product:product_id (
-          name,
-          price,
-          image
-        )
-      `
-      )
-      .eq("user_id", user_id);
+    const { rows: items } = await pool.query(
+      `SELECT c.id, p.name, p.price, p.image 
+       FROM cart c 
+       JOIN product p ON c.product_id = p.id 
+       WHERE c.user_id = $1`,
+      [user_id]
+    );
 
-    if (error) throw error;
-
-    const total = items.reduce((sum, item) => sum + item.product.price, 0);
+    const total = items.reduce((sum, item) => sum + parseFloat(item.price), 0);
 
     let html = "";
     items.forEach((item) => {
       html += `
         <div class="cart-item">
-          <img src="${item.product.image}" alt="${item.product.name}" style="width: 50px; height: 50px;">
-          <span>${item.product.name}</span>
-          <span>${item.product.price} ₽</span>
+          <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px;">
+          <span>${item.name}</span>
+          <span>${item.price} ₽</span>
           <button hx-delete="/api/cart/remove/${item.id}"
                   hx-swap="none"
                   hx-trigger="click"
@@ -340,24 +302,19 @@ app.post("/api/cart/add", async (req, res) => {
 
   try {
     // Check if product exists
-    const { data: product, error: productError } = await supabase
-      .from("product")
-      .select("id")
-      .eq("id", product_id)
-      .single();
-
-    if (productError) throw productError;
+    const {
+      rows: [product],
+    } = await pool.query("SELECT id FROM product WHERE id = $1", [product_id]);
 
     if (!product) {
       return res.status(404).json({ error: "Товар не найден" });
     }
 
     // Add to cart
-    const { error: insertError } = await supabase
-      .from("cart")
-      .insert([{ user_id, product_id }]);
-
-    if (insertError) throw insertError;
+    await pool.query("INSERT INTO cart (user_id, product_id) VALUES ($1, $2)", [
+      user_id,
+      product_id,
+    ]);
 
     res.sendStatus(204);
   } catch (err) {
@@ -376,13 +333,10 @@ app.delete("/api/cart/remove/:id", async (req, res) => {
   }
 
   try {
-    const { error } = await supabase
-      .from("cart")
-      .delete()
-      .eq("id", req.params.id)
-      .eq("user_id", user_id);
-
-    if (error) throw error;
+    await pool.query("DELETE FROM cart WHERE id = $1 AND user_id = $2", [
+      req.params.id,
+      user_id,
+    ]);
 
     res.sendStatus(204);
   } catch (err) {
@@ -401,13 +355,7 @@ app.post("/api/cart/clear", async (req, res) => {
   }
 
   try {
-    const { error } = await supabase
-      .from("cart")
-      .delete()
-      .eq("user_id", user_id);
-
-    if (error) throw error;
-
+    await pool.query("DELETE FROM cart WHERE user_id = $1", [user_id]);
     res.sendStatus(204);
   } catch (err) {
     console.error(err);
@@ -436,81 +384,66 @@ app.post("/api/cart/checkout", async (req, res) => {
 
   try {
     // Get cart items
-    const { data: items, error: itemsError } = await supabase
-      .from("cart")
-      .select(
-        `
-        id,
-        product:product_id (
-          id,
-          name,
-          price
-        )
-      `
-      )
-      .eq("user_id", user_id);
-
-    if (itemsError) throw itemsError;
+    const { rows: items } = await pool.query(
+      `SELECT c.id, p.id as product_id, p.name, p.price 
+       FROM cart c 
+       JOIN product p ON c.product_id = p.id 
+       WHERE c.user_id = $1`,
+      [user_id]
+    );
 
     if (items.length === 0) {
       return res.status(400).json({ error: "Корзина пуста" });
     }
 
-    const total = items.reduce((sum, item) => sum + item.product.price, 0);
+    const total = items.reduce((sum, item) => sum + parseFloat(item.price), 0);
 
-    // Сначала создаем запись в rental_dates
-    const { data: rentalDates, error: rentalError } = await supabase
-      .from("rental_dates")
-      .insert([
-        {
-          user_id,
-          start_date,
-          end_date,
-        },
-      ])
-      .select()
-      .single();
+    // Start transaction
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    if (rentalError) throw rentalError;
+      // Create rental dates
+      const {
+        rows: [rentalDates],
+      } = await client.query(
+        "INSERT INTO rental_dates (user_id, start_date, end_date) VALUES ($1, $2, $3) RETURNING id",
+        [user_id, start_date, end_date]
+      );
 
-    // Create order
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert([
-        {
-          user_id,
-          total_amount: total,
-          order_date: new Date().toISOString(),
-          payment_method,
-        },
-      ])
-      .select()
-      .single();
+      // Create order
+      const {
+        rows: [order],
+      } = await client.query(
+        "INSERT INTO orders (user_id, total_amount, payment_method) VALUES ($1, $2, $3) RETURNING id",
+        [user_id, total, payment_method]
+      );
 
-    if (orderError) throw orderError;
+      // Add order items
+      const orderItems = items.map((item) => ({
+        order_id: order.id,
+        product_id: item.product_id,
+        price: item.price,
+      }));
 
-    // Add order items
-    const orderItems = items.map((item) => ({
-      order_id: order.id,
-      product_id: item.product.id,
-      price: item.product.price,
-    }));
+      for (const item of orderItems) {
+        await client.query(
+          "INSERT INTO order_items (order_id, product_id, price) VALUES ($1, $2, $3)",
+          [item.order_id, item.product_id, item.price]
+        );
+      }
 
-    const { error: itemsInsertError } = await supabase
-      .from("order_items")
-      .insert(orderItems);
+      // Clear cart
+      await client.query("DELETE FROM cart WHERE user_id = $1", [user_id]);
 
-    if (itemsInsertError) throw itemsInsertError;
-
-    // Clear cart
-    const { error: clearError } = await supabase
-      .from("cart")
-      .delete()
-      .eq("user_id", user_id);
-
-    if (clearError) throw clearError;
-
-    res.json({ message: "Заказ успешно создан" });
+      await client.query("COMMIT");
+      res.json({ message: "Заказ успешно создан" });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Ошибка базы данных" });
@@ -532,20 +465,13 @@ app.post("/api/cart/save-dates", async (req, res) => {
   }
 
   try {
-    const { error } = await supabase.from("rental_dates").upsert(
-      [
-        {
-          user_id,
-          start_date: rental_start,
-          end_date: rental_end,
-        },
-      ],
-      {
-        onConflict: "user_id",
-      }
+    await pool.query(
+      `INSERT INTO rental_dates (user_id, start_date, end_date) 
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id) 
+       DO UPDATE SET start_date = $2, end_date = $3`,
+      [user_id, rental_start, rental_end]
     );
-
-    if (error) throw error;
 
     res.json({ message: "Даты сохранены успешно" });
   } catch (err) {
@@ -554,7 +480,6 @@ app.post("/api/cart/save-dates", async (req, res) => {
   }
 });
 
-// Добавим новый эндпоинт для получения истории заказов
 app.get("/api/orders", async (req, res) => {
   const user_id = req.cookies.user_id;
   if (!user_id) {
@@ -562,33 +487,22 @@ app.get("/api/orders", async (req, res) => {
   }
 
   try {
-    // Получаем заказы пользователя
-    const { data: orders, error: ordersError } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("user_id", user_id)
-      .order("order_date", { ascending: false });
+    // Get orders
+    const { rows: orders } = await pool.query(
+      "SELECT * FROM orders WHERE user_id = $1 ORDER BY order_date DESC",
+      [user_id]
+    );
 
-    if (ordersError) throw ordersError;
-
-    // Для каждого заказа получаем его товары
+    // Get order items for each order
     const ordersWithItems = await Promise.all(
       orders.map(async (order) => {
-        const { data: orderItems, error: itemsError } = await supabase
-          .from("order_items")
-          .select(
-            `
-            *,
-            product:product_id (
-              name,
-              image,
-              price
-            )
-          `
-          )
-          .eq("order_id", order.id);
-
-        if (itemsError) throw itemsError;
+        const { rows: orderItems } = await pool.query(
+          `SELECT oi.*, p.name, p.image, p.price 
+           FROM order_items oi 
+           JOIN product p ON oi.product_id = p.id 
+           WHERE oi.order_id = $1`,
+          [order.id]
+        );
 
         return {
           ...order,
@@ -597,7 +511,6 @@ app.get("/api/orders", async (req, res) => {
       })
     );
 
-    // Формируем HTML для отображения заказов
     const ordersHtml = ordersWithItems
       .map(
         (order) => `
@@ -626,11 +539,11 @@ app.get("/api/orders", async (req, res) => {
               .map(
                 (item) => `
               <div class="order-item">
-                <img src="${item.product.image}" alt="${item.product.name}" />
+                <img src="${item.image}" alt="${item.name}" />
                 <div class="order-item-info">
-                  <div class="order-item-name">${item.product.name}</div>
+                  <div class="order-item-name">${item.name}</div>
                   <div class="order-item-details">
-                    <span>${item.product.price.toLocaleString("ru-RU")} ₽</span>
+                    <span>${item.price.toLocaleString("ru-RU")} ₽</span>
                   </div>
                 </div>
               </div>
